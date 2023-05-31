@@ -22,8 +22,12 @@ async function addEvent(req, res) {
   console.log("response", response._id.toString());
 
   const folderName = `./output-file-path/${title}`;
+  const mainFolderPath = "./output-file-path";
 
   try {
+    if (!fs.existsSync(mainFolderPath)) {
+      fs.mkdirSync(mainFolderPath);
+    }
     if (!fs.existsSync(folderName)) {
       fs.mkdirSync(folderName);
     }
@@ -58,11 +62,41 @@ async function addTicket(eventId) {
     });
 }
 
-async function useTicket(req, res) {
-  const { ticketId } = req.body;
-  console.log("ticketId", ticketId);
-  const ticket = await Ticket.findByIdAndDelete(ticketId);
-  res.send(ticket || null);
+async function useEvent(req, res) {
+  const { eventId } = req.query;
+  console.log("eventId", eventId);
+  if (eventId.match(/^[0-9a-fA-F]{24}$/)) {
+    const event = await Event.findById(eventId).catch((err) =>
+      console.log(err.message)
+    );
+
+    if (event) return res.send(event._id);
+  }
+  return res.send(false);
 }
 
-module.exports = { addAdmin, addEvent, addTicket, useTicket };
+async function useTicket(req, res) {
+  const { ticketId, eventId } = req.body;
+  console.log("ticketId", ticketId);
+  const event = await Event.findById(eventId).catch((err) =>
+    console.log(err.message)
+  );
+  if (event) {
+    const ticket = await Ticket.findOneAndDelete({
+      _id: ticketId,
+      eventId: eventId,
+    }).catch((err) => {
+      console.log("error when searching for ticket");
+      console.warn(err.message);
+    });
+    if (ticket) {
+      const folderName = `./output-file-path/${event?.title}/${ticket._id}.png`;
+      fs.rmSync(folderName);
+    }
+    res.send(ticket || null);
+  } else {
+    res.send(null);
+  }
+}
+
+module.exports = { addAdmin, addEvent, addTicket, useTicket, useEvent };

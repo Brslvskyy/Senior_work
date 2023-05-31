@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const parser = require("body-parser");
-const { addAdmin, addEvent, addTicket, useTicket } = require("./bd");
+const { addAdmin, addEvent, addTicket, useTicket, useEvent } = require("./bd");
 const { default: mongoose } = require("mongoose");
 
 const limit = 52428800;
@@ -38,6 +38,10 @@ app.post("/create-ticket", function (req, res) {
 
 app.post("/use-ticket", function (req, res) {
   useTicket(req, res);
+});
+
+app.get("/use-event", function (req, res) {
+  useEvent(req, res);
 });
 
 const bdconect = async () => {
